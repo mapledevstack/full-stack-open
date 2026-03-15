@@ -1,4 +1,29 @@
 body {
   background-color: black;
-  color: white
+  color: white;
+}
+
+h2 {
+  color: lime;
+  font-style: italic;
+}
+
+.confirm {
+  color: lime;
+  background-color: rgb(47, 47, 47);
+  font-size: x-large;
+  border: 2px solid lime;
+  border-radius: 5px;
+  padding: 10px;
+  margin-bottom: 10px;
+}
+
+.error {
+  color: red;
+  background-color: rgb(47, 47, 47);
+  font-size: x-large;
+  border: 2px solid red;
+  border-radius: 5px;
+  padding: 10px;
+  margin-bottom: 10px;
 }
