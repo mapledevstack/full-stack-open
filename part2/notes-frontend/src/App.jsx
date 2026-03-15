@@ -1,38 +1,48 @@
 import Note from './components/Note'
 import { useEffect, useState } from "react"
 import axios from 'axios'
+import noteService from './services/notes'
 
 const App = () => {
   const [notes, setNotes] = useState([])
   const [newNote, setNewNote] = useState('')
   const [showAll, setShowAll] = useState(true)
 
-  useEffect(() => {
-    axios
-      .get('http://localhost:3001/notes')
-      .then(res => setNotes(res.data))
-  }, [])
-
   const notesToShow = showAll
                       ? notes
                       : notes.filter(note => note.important)
+  
+  useEffect(() => {
+    noteService
+      .getAll()
+      .then(res => setNotes(res))
+  }, [])
 
-  const addNote = (event) => {
+  const handleSubmit = (event) => {
     event.preventDefault()
-    // console.log("clicked")
 
-    const newObject = {
-      id: notes.length + 1,
-      content: newNote,
-      important: Math.random() > 0.5
-    }
+    noteService
+      .create({content: newNote, important: false})
+      .then(res => {
+        setNotes(prevNotes => [...prevNotes, res])
+        setNewNote('')
+      })
+  }
 
-    setNotes([...notes, newObject])
-    setNewNote('')
+  const handleImportanceToggle = (id) => {
+    const requiredNote = notes.find(note => note.id === id)
+    const changedNote = {...requiredNote, important: !requiredNote.important}
+    
+    noteService
+      .update(id, changedNote)
+      .then(res => setNotes(prevNotes => prevNotes.map(note => note.id === id ? res : note)))
+      .catch(error => {
+        alert(`Note id = ${id} was removed from the server`)
+        setNotes(prevNotes => prevNotes.filter(note => note.id !== id))
+      })
   }
 
   const handleChange = (event) => {
-    // console.log(event.target.value)
     setNewNote(event.target.value)
   }
 
@@ -45,12 +55,12 @@ const App = () => {
       </button>
       
       <ul>
-        {notesToShow.map((note, index) => (
-          <Note key={note.id} note={note} />
+        {notesToShow.map(note => (
+          <Note key={note.id} note={note} handleImportanceToggle={handleImportanceToggle} />
         ))}
       </ul>
 
-      <form onSubmit={addNote}>
+      <form onSubmit={handleSubmit}>
         <input
            value={newNote}
            onChange={handleChange}

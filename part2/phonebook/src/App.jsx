@@ -2,7 +2,7 @@ import { useState, useEffect } from "react"
 import Filter from "./components/Filter"
 import PersonForm from "./components/PersonForm"
 import Persons from "./components/Persons"
-import axios from "axios"
+import servePerson from './services/persons'
 
 const App = () => {
   const [persons, setPersons] = useState([])
@@ -10,25 +10,51 @@ const App = () => {
   const [newNumber, setNewNumber] = useState('')
   const [filter, setFilter] = useState('')
 
-  const url = 'http://localhost:3001/persons'
 
   useEffect(() => {
-    axios
-      .get(url)
-      .then(res => setPersons(res.data))
+    servePerson
+      .getPersons()
+      .then(fetchedPersons => setPersons(fetchedPersons))
   }, [])
 
   const handleSubmit = (event) => {
     event.preventDefault()
 
-    if(persons.some(person => person.name === newPerson)) {
-      alert(`${newPerson} is already in the list`)
-      return
+    const targetPerson = persons.find(p => p.name.toLowerCase() === newPerson.toLowerCase())
+
+    if(targetPerson) {
+      if(confirm(`${newPerson} is already in the list. Update their number?`)) {
+        servePerson
+          .updatePerson(targetPerson.id, {name: newPerson, number: newNumber})
+          .then(updatedPerson => setPersons(prevPersons => 
+            prevPersons.map(prevPerson => 
+              prevPerson.id === targetPerson.id
+                ? updatedPerson
+                : prevPerson
+          )))
+      }
+    } else {
+      servePerson
+      .createPerson({name: newPerson, number: newNumber})
+      .then(createdPerson => {
+        setPersons(prevPersons => [...prevPersons, createdPerson])
+      })
     }
 
-    setPersons(prevPersons => [...prevPersons, {name: newPerson, number: newNumber, id: (persons.length + 1)}])
     setNewPerson('')
     setNewNumber('')
+  }
+
+  const handleDelete = (id) => {
+    const targetPerson = persons.find(p => p.id === id)
+    
+    if(confirm(`Delete ${targetPerson.name}?`)) {
+      servePerson
+        .deletePerson(id)
+        .then(() => {
+          setPersons(prevPersons => prevPersons.filter(p => p.id !== id))
+        })
+    }  
   }
 
   const handlePersonChange = (event) => {
@@ -43,7 +69,9 @@ const App = () => {
     setFilter(event.target.value.toLowerCase())
   }
 
-  const personsToShow = persons.filter(person => person.name.toLowerCase().includes(filter))
+  const personsToShow = filter
+                          ? persons.filter(person => person.name.toLowerCase().includes(filter))
+                          : persons
 
   return (
     <div>
@@ -63,7 +91,7 @@ const App = () => {
       />
       
       <h2>Numbers</h2>
-      <Persons personsToShow={personsToShow}/>
+      <Persons personsToShow={personsToShow} handleDelete={handleDelete}/>
       
     </div>
   )
