@@ -1,6 +1,7 @@
 import axios from 'axios'
 
-const baseURL = 'http://localhost:3001/api/persons'
+// const baseURL = 'http://localhost:3001/api/persons'
+const baseURL = 'https://full-stack-open-ztwv.onrender.com:1000/api/persons'
 
 const getPersons = () => {
   return axios
